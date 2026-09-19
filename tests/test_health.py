@@ -85,6 +85,58 @@ class ServiceRequestApiTests(unittest.TestCase):
         self.assertEqual(len(response), 1)
         self.assertEqual(response[0]["title"], "Printer issue")
 
+    def test_get_existing_request(self) -> None:
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "Email issue", "description": "Email cannot send messages."},
+        )
+
+        status_code, response = make_request("GET", "/requests/1")
+
+        self.assertEqual(status_code, 200)
+        self.assertEqual(response["id"], 1)
+        self.assertEqual(response["status"], "pending")
+
+    def test_get_nonexistent_request_returns_not_found(self) -> None:
+        status_code, response = make_request("GET", "/requests/999")
+
+        self.assertEqual(status_code, 404)
+        self.assertIn("999", response["detail"])
+
+    def test_update_request_status(self) -> None:
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "Laptop issue", "description": "Laptop will not start."},
+        )
+
+        status_code, response = make_request(
+            "PATCH",
+            "/requests/1/status",
+            {"status": "in_progress"},
+        )
+
+        self.assertEqual(status_code, 200)
+        self.assertEqual(response["id"], 1)
+        self.assertEqual(response["status"], "in_progress")
+
+    def test_invalid_status_is_rejected(self) -> None:
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "Keyboard issue", "description": "Keyboard keys are stuck."},
+        )
+
+        status_code, response = make_request(
+            "PATCH",
+            "/requests/1/status",
+            {"status": "unknown"},
+        )
+
+        self.assertEqual(status_code, 422)
+        self.assertIn("pending", str(response))
+
     def test_request_requires_title_and_description(self) -> None:
         status_code, _ = make_request("POST", "/requests", {"title": ""})
 
