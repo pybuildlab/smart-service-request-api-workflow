@@ -91,12 +91,24 @@ class ServiceRequestApiTests(unittest.TestCase):
             "/requests",
             {"title": "Email issue", "description": "Email cannot send messages."},
         )
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "Network issue", "description": "The network is slow."},
+        )
 
-        status_code, response = make_request("GET", "/requests/1")
+        status_code, response = make_request("GET", "/requests/2")
 
         self.assertEqual(status_code, 200)
-        self.assertEqual(response["id"], 1)
-        self.assertEqual(response["status"], "pending")
+        self.assertEqual(
+            response,
+            {
+                "id": 2,
+                "title": "Network issue",
+                "description": "The network is slow.",
+                "status": "pending",
+            },
+        )
 
     def test_get_nonexistent_request_returns_not_found(self) -> None:
         status_code, response = make_request("GET", "/requests/999")
@@ -118,8 +130,15 @@ class ServiceRequestApiTests(unittest.TestCase):
         )
 
         self.assertEqual(status_code, 200)
-        self.assertEqual(response["id"], 1)
-        self.assertEqual(response["status"], "in_progress")
+        self.assertEqual(
+            response,
+            {
+                "id": 1,
+                "title": "Laptop issue",
+                "description": "Laptop will not start.",
+                "status": "in_progress",
+            },
+        )
 
     def test_invalid_status_is_rejected(self) -> None:
         make_request(
