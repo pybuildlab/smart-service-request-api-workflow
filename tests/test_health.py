@@ -114,7 +114,7 @@ class ServiceRequestApiTests(unittest.TestCase):
         status_code, response = make_request("GET", "/requests/999")
 
         self.assertEqual(status_code, 404)
-        self.assertIn("999", response["detail"])
+        self.assertEqual(response["detail"], "Service request with ID 999 was not found.")
 
     def test_update_request_status(self) -> None:
         make_request(
@@ -188,12 +188,24 @@ class ServiceRequestApiTests(unittest.TestCase):
         )
 
         self.assertEqual(status_code, 422)
-        self.assertIn("pending", str(response))
+        self.assertEqual(response["detail"][0]["loc"], ["body", "status"])
+        self.assertEqual(response["detail"][0]["type"], "literal_error")
 
-    def test_request_requires_title_and_description(self) -> None:
-        status_code, _ = make_request("POST", "/requests", {"title": ""})
+    def test_invalid_request_payload_is_rejected(self) -> None:
+        invalid_payloads = [
+            {"title": "", "description": "A valid description."},
+            {"title": "   ", "description": "A valid description."},
+            {"title": "Valid title"},
+            {"title": "Valid title", "description": "   "},
+        ]
 
-        self.assertEqual(status_code, 422)
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                status_code, response = make_request("POST", "/requests", payload)
+
+                self.assertEqual(status_code, 422)
+                self.assertTrue(response["detail"])
+                self.assertEqual(response["detail"][0]["loc"][0], "body")
 
     def test_health_check(self) -> None:
         status_code, response = make_request("GET", "/health")
