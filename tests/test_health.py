@@ -140,6 +140,40 @@ class ServiceRequestApiTests(unittest.TestCase):
             },
         )
 
+    def test_updated_status_is_returned_by_request_endpoints(self) -> None:
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "First issue", "description": "The first request."},
+        )
+        make_request(
+            "POST",
+            "/requests",
+            {"title": "Second issue", "description": "The second request."},
+        )
+        make_request(
+            "PATCH",
+            "/requests/2/status",
+            {"status": "completed"},
+        )
+
+        single_status_code, single_response = make_request("GET", "/requests/2")
+        list_status_code, list_response = make_request("GET", "/requests")
+
+        self.assertEqual(single_status_code, 200)
+        self.assertEqual(
+            single_response,
+            {
+                "id": 2,
+                "title": "Second issue",
+                "description": "The second request.",
+                "status": "completed",
+            },
+        )
+        self.assertEqual(list_status_code, 200)
+        self.assertEqual([request["id"] for request in list_response], [1, 2])
+        self.assertEqual([request["status"] for request in list_response], ["pending", "completed"])
+
     def test_invalid_status_is_rejected(self) -> None:
         make_request(
             "POST",
