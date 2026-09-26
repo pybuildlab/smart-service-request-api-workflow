@@ -1,8 +1,20 @@
 import asyncio
 import json
+import os
+from pathlib import Path
+import tempfile
 import unittest
 
-from app import main
+
+TEST_DATABASE_DIRECTORY = tempfile.TemporaryDirectory()
+TEST_DATABASE_PATH = Path(TEST_DATABASE_DIRECTORY.name) / "service_requests_test.db"
+os.environ["SERVICE_REQUEST_DATABASE"] = str(TEST_DATABASE_PATH)
+
+from app import database, main
+
+
+def tearDownModule() -> None:
+    TEST_DATABASE_DIRECTORY.cleanup()
 
 
 def make_request(method: str, path: str, body: dict[str, str] | None = None) -> tuple[int, object]:
@@ -48,8 +60,21 @@ def make_request(method: str, path: str, body: dict[str, str] | None = None) -> 
 
 class ServiceRequestApiTests(unittest.TestCase):
     def setUp(self) -> None:
-        main.service_requests.clear()
-        main.next_request_id = 1
+        database.initialize_database()
+        with database.get_connection() as connection:
+            with connection:
+                connection.execute("DELETE FROM requests")
+
+    def test_database_initializes_with_requests_table(self) -> None:
+        self.assertTrue(TEST_DATABASE_PATH.exists())
+
+        with database.get_connection() as connection:
+            columns = {
+                row["name"]
+                for row in connection.execute("PRAGMA table_info(requests)").fetchall()
+            }
+
+        self.assertTrue({"id", "title", "description", "status"}.issubset(columns))
 
     def test_create_request(self) -> None:
         status_code, response = make_request(
@@ -84,6 +109,22 @@ class ServiceRequestApiTests(unittest.TestCase):
         self.assertEqual(status_code, 200)
         self.assertEqual(len(response), 1)
         self.assertEqual(response[0]["title"], "Printer issue")
+
+    def test_created_request_persists_in_a_separate_database_connection(self) -> None:
+        _, created_request = make_request(
+            "POST",
+            "/requests",
+            {"title": "Persistent issue", "description": "Stored in SQLite."},
+        )
+
+        with database.get_connection() as connection:
+            row = connection.execute(
+                "SELECT id, title, description, status FROM requests WHERE id = ?",
+                (created_request["id"],),
+            ).fetchone()
+
+        self.assertIsNotNone(row)
+        self.assertEqual(dict(row), created_request)
 
     def test_get_existing_request(self) -> None:
         make_request(

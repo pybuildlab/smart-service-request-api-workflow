@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Service Request Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <div id="feedback" class="feedback" role="status" aria-live="polite" hidden>
+    <span id="feedback-message" class="feedback__message"></span>
+    <span class="feedback__progress" id="feedback-progress"></span>
+  </div>
+
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-header__brand">
+        <span class="app-header__mark" aria-hidden="true">SR</span>
+        <div>
+          <h1 class="app-header__title">Service Request Workflow</h1>
+          <p class="app-header__tagline">Log, track, and resolve internal requests</p>
+        </div>
+      </div>
+
+      <div class="app-header__right">
+        <span class="status-chip" id="connection-status">
+          <span class="status-chip__dot" id="connection-status-dot" aria-hidden="true"></span>
+          <span id="connection-status-text">Connecting&hellip;</span>
+        </span>
+        <nav class="app-header__nav">
+          <a href="/app" class="is-active"><span class="nav-icon" aria-hidden="true">&#9635;</span>Dashboard</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="hero__inner">
+      <div class="hero__text">
+        <h2>Track every request, end to end</h2>
+        <p>Create, monitor, and resolve internal service requests in one place &mdash; updated live from the API.</p>
+      </div>
+      <button type="button" id="new-request-cta" class="hero__cta">
+        <span aria-hidden="true">&#43;</span> New Request
+      </button>
+    </div>
+  </section>
+
+  <main class="dashboard" id="main-content">
+    <section class="stats" aria-label="Request statistics">
+      <div class="stat-card stat-card--total">
+        <span class="stat-card__icon" aria-hidden="true">&#128203;</span>
+        <span class="stat-card__value" id="stat-total">0</span>
+        <span class="stat-card__label">Total</span>
+      </div>
+      <div class="stat-card stat-card--pending">
+        <span class="stat-card__icon" aria-hidden="true">&#9203;</span>
+        <span class="stat-card__value" id="stat-pending">0</span>
+        <span class="stat-card__label">Pending</span>
+      </div>
+      <div class="stat-card stat-card--in_progress">
+        <span class="stat-card__icon" aria-hidden="true">&#9889;</span>
+        <span class="stat-card__value" id="stat-in_progress">0</span>
+        <span class="stat-card__label">In Progress</span>
+      </div>
+      <div class="stat-card stat-card--completed">
+        <span class="stat-card__icon" aria-hidden="true">&#9989;</span>
+        <span class="stat-card__value" id="stat-completed">0</span>
+        <span class="stat-card__label">Completed</span>
+      </div>
+      <div class="stat-card stat-card--cancelled">
+        <span class="stat-card__icon" aria-hidden="true">&#10060;</span>
+        <span class="stat-card__value" id="stat-cancelled">0</span>
+        <span class="stat-card__label">Cancelled</span>
+      </div>
+    </section>
+
+    <div class="dashboard__body">
+      <section class="panel panel--form" aria-labelledby="create-heading">
+        <h2 id="create-heading">New Service Request</h2>
+        <form id="request-form" novalidate>
+          <div class="field">
+            <label for="title">Title</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              maxlength="200"
+              required
+              placeholder="e.g. Internet connection issue"
+            />
+          </div>
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea
+              id="description"
+              name="description"
+              maxlength="1000"
+              rows="4"
+              required
+              placeholder="Describe the issue..."
+            ></textarea>
+          </div>
+          <button type="submit" id="submit-button">
+            <span class="button-label">Create Request</span>
+          </button>
+        </form>
+      </section>
+
+      <section class="panel panel--list" aria-labelledby="list-heading">
+        <div class="panel__header">
+          <div>
+            <h2 id="list-heading">Service Requests</h2>
+            <p class="panel__meta" id="last-updated">Not loaded yet</p>
+          </div>
+          <button type="button" id="refresh-button">
+            <span class="refresh-icon" aria-hidden="true">&#8635;</span> Refresh
+          </button>
+        </div>
+
+        <div class="filter-bar" id="filter-bar" role="group" aria-label="Filter by status">
+          <button type="button" class="filter-chip is-active" data-filter="all" aria-pressed="true">All</button>
+          <button type="button" class="filter-chip" data-filter="pending" aria-pressed="false">Pending</button>
+          <button type="button" class="filter-chip" data-filter="in_progress" aria-pressed="false">In Progress</button>
+          <button type="button" class="filter-chip" data-filter="completed" aria-pressed="false">Completed</button>
+          <button type="button" class="filter-chip" data-filter="cancelled" aria-pressed="false">Cancelled</button>
+        </div>
+
+        <div id="loading" class="loading" hidden>
+          <span class="spinner" aria-hidden="true"></span> Loading requests...
+        </div>
+        <div id="empty-state" class="empty-state" hidden>
+          <span class="empty-state__icon" aria-hidden="true">&#128203;</span>
+          <p id="empty-state-text">No service requests yet. Create one above.</p>
+        </div>
+
+        <ul id="request-list" class="request-list"></ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    <p>Smart Service Request &amp; API Workflow System</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

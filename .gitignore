@@ -5,6 +5,9 @@
 __pycache__/
 *.py[cod]
 
+# Local SQLite database
+app/service_requests.db
+*.db
 # Environment variables / secrets
 .env
 .env.*
